@@ -1,23 +1,26 @@
 ﻿using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
 using System;
+using System.Diagnostics;
+using System.IO;
 
 class Program
 {
     static void Main()
     {
         // Yeni belge oluştur
-        var document = new MigraDoc.DocumentObjectModel.Document();
+        var document = new Document();
         var section = document.AddSection();
 
         // Başlık
         var title = section.AddParagraph("GENEL ÜRETİM ÇALIŞMA PLANI");
         title.Format.Font.Size = 16;
         title.Format.Font.Bold = true;
-        title.Format.Alignment = MigraDoc.DocumentObjectModel.ParagraphAlignment.Center;
+        title.Format.Font.Name = "Verdana"; // Türkçe karakter uyumlu
+        title.Format.Alignment = ParagraphAlignment.Center;
         section.AddParagraph();
 
-        // Plan bölümleri
+        // Bölümleri ekle
         AddSection(document, "1. Vardiya Planlaması",
             "• Vardiya 1: 06:00 – 14:00\n• Vardiya 2: 14:00 – 22:00\n• Vardiya 3: 22:00 – 06:00 (isteğe bağlı)\n" +
             "• Her vardiyada minimum 1 süpervizör ve yeterli sayıda operatör yer almalı.\n• Vardiya devir teslimlerinde üretim bilgisi eksiksiz aktarılmalı.");
@@ -48,26 +51,37 @@ class Program
             "- Günlük hedef üretim: Örneğin 300 kasa\n- Haftalık ödüllendirme sistemi (ekip bazlı)\n- Eğitim günleri: Ayda 1 kez süreç verimliliği eğitimi");
 
         // PDF olarak kaydet
-        var renderer = new MigraDoc.Rendering.PdfDocumentRenderer(true)
+        var renderer = new PdfDocumentRenderer(true)
         {
             Document = document
         };
         renderer.RenderDocument();
-        renderer.PdfDocument.Save("Genel_Uretim_Calisma_Plani.pdf");
 
-        Console.WriteLine("PDF başarıyla oluşturuldu!");
+        // Masaüstüne kaydet
+        string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string filePath = Path.Combine(desktopPath, "Genel_Uretim_Calisma_Plani.pdf");
+
+        renderer.PdfDocument.Save(filePath);
+
+        Console.WriteLine("PDF başarıyla oluşturuldu!\nDosya yolu: " + filePath);
+
+        // Otomatik aç (isteğe bağlı)
+        Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
     }
 
-    static void AddSection(MigraDoc.DocumentObjectModel.Document doc, string title, string content)
+    static void AddSection(Document doc, string title, string content)
     {
         var section = doc.Sections[doc.Sections.Count - 1];
-        var paragraph = section.AddParagraph(title);
-        paragraph.Format.Font.Bold = true;
-        paragraph.Format.Font.Size = 12;
-        paragraph.Format.SpaceBefore = "1cm";
+
+        var header = section.AddParagraph(title);
+        header.Format.Font.Bold = true;
+        header.Format.Font.Size = 12;
+        header.Format.Font.Name = "Verdana";
+        header.Format.SpaceBefore = "1cm";
 
         var body = section.AddParagraph(content);
         body.Format.Font.Size = 10;
+        body.Format.Font.Name = "Verdana";
         body.Format.SpaceAfter = "0.5cm";
     }
 }
